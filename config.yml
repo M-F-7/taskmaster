@@ -1,0 +1,24 @@
+programs:
+  sleeper:
+    cmd: "sleep 30"
+    numprocs: 1
+    autostart: true
+    autorestart: never
+    exitcodes:
+      - 0
+    startretries: 0
+    starttime: 1
+    stopsignal: TERM
+    stoptime: 5
+  printer:
+    cmd: "yes hello"
+    numprocs: 1
+    autostart: true
+    autorestart: never
+    exitcodes:
+      - 0
+    startretries: 0
+    starttime: 1
+    stopsignal: TERM
+    stoptime: 5
+    stdout: /tmp/printer.stdout
