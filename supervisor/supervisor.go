@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"taskmaster/config"
 	"taskmaster/process"
+	"reflect"
 )
 
 type Supervisor struct {
 	Prs map[string]*process.Process
 	cfg *config.Config
+	CfgPath string
 }
 
 
 
-func New(cfg *config.Config) *Supervisor {
-    return &Supervisor{Prs: make(map[string]*process.Process), cfg: cfg}
+func New(cfg *config.Config, path string) *Supervisor {
+    return &Supervisor{Prs: make(map[string]*process.Process), cfg: cfg, CfgPath: path}
 }
 
 func (s *Supervisor) Start() error{
@@ -75,4 +77,55 @@ func (s *Supervisor) StopJob(name string) error{
 	}
 	return nil
 
+}
+
+
+func (s *Supervisor) RestartJob(name string) error{
+	if _, ok := s.Prs[name]; !ok {
+		fmt.Printf("Unknown program: %s\n", name)
+		return nil
+	}
+	err := s.Prs[name].Stop()
+	if err != nil {
+		return err
+	}
+	err = s.Prs[name].Start()
+	if err != nil{
+		return err
+	}
+	go s.Prs[name].Wait()
+	return nil
+}
+
+
+func (s *Supervisor) Reload(newCfg *config.Config) {
+	var flag int
+
+	for name, prog := range newCfg.Programs {
+		flag = 0
+		for curr_name, curr_prog := range s.cfg.Programs{
+			if curr_name == name{
+				flag = 1
+				if reflect.DeepEqual(curr_prog, prog){ // ==
+					break
+				} else {
+					s.RestartJob(name)
+				}
+			}
+		}
+		if flag == 0{
+			s.Prs[name] = process.New(prog.Cmd)
+			if prog.AutoStart {
+        		s.StartJob(name)
+	    	}
+		}
+	}
+
+	for name, p := range s.Prs {
+    	if _, exists := newCfg.Programs[name]; !exists {
+        	p.Stop()
+        	delete(s.Prs, name)
+    	}
+	}
+    s.cfg = newCfg
 }

@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"os"
 	"taskmaster/config"
+	"taskmaster/signals"
+
 	// "taskmaster/logger"
 	// "taskmaster/process"
-	"taskmaster/supervisor"
 	"taskmaster/shell"
+	"taskmaster/supervisor"
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	if len(os.Args) != 2 {
 		fmt.Fprintf(os.Stderr, "Usage: %s <config.yml>\n", os.Args[0])
 		os.Exit(1)
 	}
@@ -28,10 +30,11 @@ func main() {
 	// 		name, prog.Cmd, prog.NumProcs, prog.AutoStart, prog.ExitCodes)
 	// }
 
-	spr := supervisor.New(cfg)
+	spr := supervisor.New(cfg, os.Args[1])
 	spr.Start()
 
 	shl := shell.New(spr)
 	shl.Run()
-	
+
+	go signals.Listen(spr)
 }

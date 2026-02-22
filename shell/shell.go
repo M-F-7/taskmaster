@@ -35,7 +35,7 @@ func (s* Shell) Run() error{
 		case "stop":
 			s.svr.StopJob(split[1])
 		case "restart":
-			;
+			s.svr.RestartJob(split[1])
 		case "exit":
 			return nil
 		default:
