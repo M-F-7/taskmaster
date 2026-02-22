@@ -23,7 +23,7 @@ func New(cfg *config.Config, path string) *Supervisor {
 
 func (s *Supervisor) Start() error{
 	for name, prog := range(s.cfg.Programs){
-		s.Prs[name] = process.New(prog.Cmd)
+		s.Prs[name] = process.New(prog.Cmd, name)
 		if prog.AutoStart{
 			err := s.Prs[name].Start()
 			if err != nil{
@@ -86,9 +86,6 @@ func (s *Supervisor) RestartJob(name string) error{
 		return nil
 	}
 	err := s.Prs[name].Stop()
-	if err != nil {
-		return err
-	}
 	err = s.Prs[name].Start()
 	if err != nil{
 		return err
@@ -114,7 +111,8 @@ func (s *Supervisor) Reload(newCfg *config.Config) {
 			}
 		}
 		if flag == 0{
-			s.Prs[name] = process.New(prog.Cmd)
+			s.Prs[name] = process.New(prog.Cmd, name)
+
 			if prog.AutoStart {
         		s.StartJob(name)
 	    	}

@@ -2,15 +2,15 @@ package signals
 
 // Signals handles Unix signal interception (SIGHUP, SIGTERM, etc.)
 
-
 import (
-	"taskmaster/supervisor"
-	"taskmaster/process"
 	"os"
 	"os/signal"
+	// "strings"
 	"syscall"
-	"taskmaster/logger"
 	"taskmaster/config"
+	"taskmaster/logger"
+	"taskmaster/process"
+	"taskmaster/supervisor"
 )
 
 func Listen(svr *supervisor.Supervisor) error{
@@ -27,10 +27,12 @@ func Listen(svr *supervisor.Supervisor) error{
 					break
 				}
 				svr.Reload(newCfg)
+				// split := strings.Fields(newCfg.Programs.Cmd)
+				// logger.LogRestart(split[0])
 			case syscall.SIGTERM:
 				for _, p := range svr.Prs {
-    			if p.GetState() == process.Running {
-        		p.Stop()
+    				if p.GetState() == process.Running {
+        				p.Stop()
 					}
 				}
 				os.Exit(0)

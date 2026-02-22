@@ -3,12 +3,13 @@ package process
 // Process handles launching and monitoring a single child process.
 
 import (
-	// "fmt"s
+	// "fmt"
 	// "log"
 	// "os"
 	"os/exec"
 	"strings"
 	"syscall"
+	"taskmaster/logger"
 )
 
 type State int 
@@ -33,43 +34,50 @@ type Process struct {
 	cmd string
 	state State
 	exec *exec.Cmd
+	Name string
+	Stopping bool
 
 }
 
-func New(cmd string) *Process {
-    return &Process{cmd: cmd, state: Stopped}
+func New(cmd string, name string) *Process {
+    return &Process{cmd: cmd, state: Stopped, Name:name, Stopping: false}
 }
 
 
 func (p* Process) Start() error{
 	split := strings.Fields(p.cmd)
 	p.exec = exec.Command(split[0], split[1:]...)
-
 	err := p.exec.Start()
 	if err != nil{
 		return err
 	}
 	p.state = Running
+	logger.LogStart(p.Name, p.Pid())
 	return nil
 }
 
 
-func (p* Process) Wait() error{
-	err := p.exec.Wait()
-	p.state = Stopped
-	if err != nil{
-		return err
-	}
-	return nil
+func (p *Process) Wait() error {
+    err := p.exec.Wait()
+    wasStopping := p.Stopping
+    p.state = Stopped
+    p.Stopping = false
+    if err != nil && !wasStopping {
+        logger.LogDied(p.Name, p.exec.ProcessState.ExitCode())
+        return err
+    }
+    return nil
 }
 
 
 func (p* Process) Stop() error{
+	p.Stopping = true
 	err := p.exec.Process.Signal(syscall.SIGTERM)
 	if err != nil{
 		return err
 	}
 	p.state = Stopped
+	logger.LogStop(p.Name)
 	return nil
 }
 

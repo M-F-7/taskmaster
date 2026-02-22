@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"taskmaster/config"
+	"taskmaster/logger"
 	"taskmaster/signals"
 
 	// "taskmaster/logger"
@@ -29,7 +30,7 @@ func main() {
 	// 	fmt.Printf("  [%s] cmd=%q numprocs=%d autostart=%v exitcodes=%v\n",
 	// 		name, prog.Cmd, prog.NumProcs, prog.AutoStart, prog.ExitCodes)
 	// }
-
+	_ = logger.Init("taskmaster.log")
 	spr := supervisor.New(cfg, os.Args[1])
 	spr.Start()
 
