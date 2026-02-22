@@ -39,3 +39,40 @@ func (s *Supervisor) Status() {
         fmt.Printf("%-20s %-10s pid %d\n", name, p.GetState(), p.Pid())
     }
 }
+
+func (s *Supervisor) StartJob(name string) error{
+
+	if _, ok := s.Prs[name]; !ok {
+    	fmt.Printf("unknown program: %s\n", name)
+    	return nil
+	}
+	if s.Prs[name].GetState() == process.Running{
+		fmt.Printf("Process already running")
+		return nil
+	}
+	err := s.Prs[name].Start()
+	if err != nil{
+		return err
+	}
+	go s.Prs[name].Wait()
+	return nil
+
+}
+
+func (s *Supervisor) StopJob(name string) error{
+
+	if _, ok := s.Prs[name]; !ok {
+    	fmt.Printf("unknown program: %s\n", name)
+    	return nil
+	}
+	if s.Prs[name].GetState() == process.Stopped{
+		fmt.Printf("Process already stopped")
+		return nil
+	}
+	err := s.Prs[name].Stop()
+	if err != nil{
+		return err
+	}
+	return nil
+
+}

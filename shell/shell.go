@@ -31,9 +31,9 @@ func (s* Shell) Run() error{
 		case "status":
 			s.svr.Status()
 		case "start":
-			;
+			s.svr.StartJob(split[1])
 		case "stop":
-			;
+			s.svr.StopJob(split[1])
 		case "restart":
 			;
 		case "exit":

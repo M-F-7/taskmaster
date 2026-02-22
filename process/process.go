@@ -6,22 +6,20 @@ import (
 	// "fmt"s
 	// "log"
 	// "os"
-	"strings"
 	"os/exec"
+	"strings"
+	"syscall"
 )
 
 type State int 
 
 const (
-	Started State = iota //automatic incrementation
-	Running
+	Running = iota //automatic incrementation
 	Stopped
 )
 
 func (s State) String() string {
     switch s {
-    case Started:
-        return "STARTING"
     case Running:
         return "RUNNING"
     case Stopped:
@@ -66,6 +64,15 @@ func (p* Process) Wait() error{
 }
 
 
+func (p* Process) Stop() error{
+	err := p.exec.Process.Signal(syscall.SIGTERM)
+	if err != nil{
+		return err
+	}
+	p.state = Stopped
+	return nil
+}
+
 func (p* Process) Pid () int{
 	if p.exec == nil || p.exec.Process == nil {
         return 0
@@ -75,4 +82,8 @@ func (p* Process) Pid () int{
 
 func (p* Process) GetState() State{
 	return p.state
+}
+
+func (p* Process) SetState(state State) {
+	p.state = state
 }
