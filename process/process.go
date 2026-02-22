@@ -36,11 +36,12 @@ type Process struct {
 	exec *exec.Cmd
 	Name string
 	Stopping bool
+	Done chan error
 
 }
 
 func New(cmd string, name string) *Process {
-    return &Process{cmd: cmd, state: Stopped, Name:name, Stopping: false}
+    return &Process{cmd: cmd, state: Stopped, Name:name, Stopping: false, Done: make(chan error, 1)}
 }
 
 
@@ -64,8 +65,10 @@ func (p *Process) Wait() error {
     p.Stopping = false
     if err != nil && !wasStopping {
         logger.LogDied(p.Name, p.exec.ProcessState.ExitCode())
+		p.Done <- err
         return err
     }
+	p.Done <- err
     return nil
 }
 

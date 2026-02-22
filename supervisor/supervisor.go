@@ -4,9 +4,10 @@ package supervisor
 
 import (
 	"fmt"
-	"taskmaster/config"
-	"taskmaster/process"
 	"reflect"
+	"taskmaster/config"
+	"taskmaster/logger"
+	"taskmaster/process"
 )
 
 type Supervisor struct {
@@ -29,7 +30,7 @@ func (s *Supervisor) Start() error{
 			if err != nil{
 				return err
 			}
-			go s.Prs[name].Wait()
+			go s.Watch(name)
 		}
 	}
 	return nil
@@ -56,7 +57,7 @@ func (s *Supervisor) StartJob(name string) error{
 	if err != nil{
 		return err
 	}
-	go s.Prs[name].Wait()
+	go s.Watch(name)
 	return nil
 
 }
@@ -86,11 +87,14 @@ func (s *Supervisor) RestartJob(name string) error{
 		return nil
 	}
 	err := s.Prs[name].Stop()
+	if err != nil {
+    	logger.Log(fmt.Sprintf("error stopping %s: %v", name, err))
+	}
 	err = s.Prs[name].Start()
 	if err != nil{
 		return err
 	}
-	go s.Prs[name].Wait()
+	s.Watch(name)
 	return nil
 }
 
@@ -126,4 +130,25 @@ func (s *Supervisor) Reload(newCfg *config.Config) {
     	}
 	}
     s.cfg = newCfg
+}
+
+
+func (s *Supervisor) Watch(name string) {
+	s.Prs[name].Wait()
+    err := <-s.Prs[name].Done
+    prog := s.cfg.Programs[name]
+    
+    switch prog.AutoRestart {
+    case "always":
+		logger.LogRestart(name)
+        s.StartJob(name)
+        s.Watch(name)
+    case "unexpected":
+        if err != nil {
+			logger.LogRestart(name)
+            s.StartJob(name)
+        	s.Watch(name)
+        }
+    case "never":
+    }
 }

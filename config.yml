@@ -14,7 +14,7 @@ programs:
     cmd: "yes hello"
     numprocs: 1
     autostart: true
-    autorestart: never
+    autorestart: always
     exitcodes:
       - 0
     startretries: 0

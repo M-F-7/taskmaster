@@ -1,6 +1,0 @@
-2026/02/22 19:04:29 [sleeper] started (pid 53221)
-2026/02/22 19:04:29 [printer] started (pid 53222)
-2026/02/22 19:05:01 [printer] died unexpectedly (exit code -1) 
-2026/02/22 19:05:11 [printer] started (pid 53872)
-2026/02/22 19:05:17 [printer] stopped 
-2026/02/22 19:05:17 [printer] started (pid 53926)
