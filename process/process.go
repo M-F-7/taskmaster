@@ -5,11 +5,13 @@ package process
 import (
 	// "fmt"
 	// "log"
-	// "os"
+	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 	"taskmaster/logger"
+	"time"
 )
 
 type State int 
@@ -18,6 +20,15 @@ const (
 	Running = iota //automatic incrementation
 	Stopped
 )
+
+var signals = map[string]syscall.Signal{
+    "TERM": syscall.SIGTERM,
+    "KILL": syscall.SIGKILL,
+    "USR1": syscall.SIGUSR1,
+    "USR2": syscall.SIGUSR2,
+    "HUP":  syscall.SIGHUP,
+    "INT":  syscall.SIGINT,
+}
 
 func (s State) String() string {
     switch s {
@@ -37,20 +48,67 @@ type Process struct {
 	Name string
 	Stopping bool
 	Done chan error
-
+	stopSignal string
+	stopTime int
+	stdout string
+	stderr string  
+	env map[string]string
+	workingDir string
+	umask string
 }
 
-func New(cmd string, name string) *Process {
-    return &Process{cmd: cmd, state: Stopped, Name:name, Stopping: false, Done: make(chan error, 1)}
+func New(cmd string, name string, signal string, timesig int, stdout string, stderr string, env map[string] string, workingDir string, umask string) *Process {
+    return &Process{
+		cmd: cmd, 
+		state: Stopped,
+		Name:name,
+		Stopping: false,
+		Done: make(chan error,1),
+		stopSignal: signal,
+		stopTime:timesig,
+		stdout: stdout,
+		stderr: stderr,
+		env: env,
+		workingDir: workingDir,
+		umask: umask, //other file permissions 
+}
 }
 
 
 func (p* Process) Start() error{
 	split := strings.Fields(p.cmd)
 	p.exec = exec.Command(split[0], split[1:]...)
-	err := p.exec.Start()
-	if err != nil{
-		return err
+	p.exec.Dir = p.workingDir
+	for key, value := range p.env {
+    	p.exec.Env = append(p.exec.Env, key+"="+value)
+	}	
+	if p.stdout != "" {
+    	f, err := os.OpenFile(p.stdout, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    	if err != nil {
+    	    return err
+    	}
+    	p.exec.Stdout = f
+	}
+	if p.stderr != "" {
+    	f, err := os.OpenFile(p.stderr, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    	if err != nil {
+    	    return err
+    	}
+    	p.exec.Stderr = f
+	}
+	if p.umask != "" {
+	    val, _ := strconv.ParseUint(p.umask, 8, 32)
+	    old := syscall.Umask(int(val))
+	    err := p.exec.Start()
+	    syscall.Umask(old)
+	    if err != nil {
+	        return err
+	    }
+	} else {
+	    err := p.exec.Start()
+	    if err != nil {
+	        return err
+	    }
 	}
 	p.state = Running
 	logger.LogStart(p.Name, p.Pid())
@@ -75,7 +133,14 @@ func (p *Process) Wait() error {
 
 func (p* Process) Stop() error{
 	p.Stopping = true
-	err := p.exec.Process.Signal(syscall.SIGTERM)
+	sig := signals[p.stopSignal]
+	err := p.exec.Process.Signal(sig)
+	// time.Sleep(time.Duration(p.stopTime) * time.Second)
+	select {
+		case <-p.Done:
+		case <-time.After(time.Duration(p.stopTime) * time.Second):
+		    p.exec.Process.Kill()  
+	}
 	if err != nil{
 		return err
 	}
@@ -97,4 +162,13 @@ func (p* Process) GetState() State{
 
 func (p* Process) SetState(state State) {
 	p.state = state
+}
+
+func (p *Process) SetStopSignal(sig string) {
+    p.stopSignal = sig
+}
+
+
+func (p *Process) ExitCode() int {
+    return p.exec.ProcessState.ExitCode()
 }

@@ -4,9 +4,11 @@ package shell
 
 import (
 	"fmt"
-	"taskmaster/supervisor"
-	"github.com/chzyer/readline"
 	"strings"
+	"taskmaster/config"
+	"taskmaster/supervisor"
+
+	"github.com/chzyer/readline"
 )
 
 type Shell struct {
@@ -31,11 +33,31 @@ func (s* Shell) Run() error{
 		case "status":
 			s.svr.Status()
 		case "start":
+			if len(split) < 2 {
+        		fmt.Println("Usage: start <name>")
+        		continue
+    		}
 			s.svr.StartJob(split[1])
 		case "stop":
+			if len(split) < 2 {
+        		fmt.Println("Usage: stop <name>")
+        		continue
+    		}
 			s.svr.StopJob(split[1])
 		case "restart":
+			if len(split) < 2 {
+        		fmt.Println("Usage: restart <name>")
+        		continue
+    		}
 			s.svr.RestartJob(split[1])
+		case "reload":
+			newcfg, err := config.Load(s.svr.CfgPath)
+			if err != nil{
+				fmt.Println("reload error:", err)
+    			continue
+			}
+			s.svr.Reload(newcfg)
+			
 		case "exit":
 			return nil
 		default:
