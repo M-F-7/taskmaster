@@ -6,6 +6,7 @@ GOFLAGS = -ldflags="-s -w"
 all: $(NAME)
 
 $(NAME):
+	@echo -n '' > tjaskmaster.log
 	$(GO) build $(GOFLAGS) -o $(NAME) ./cmd/$(NAME)
 
 clean:
@@ -20,7 +21,7 @@ run:
 	go run ./cmd/taskmaster config.yml
 
 test:
-	$(GO) test ./...
+	$(GO) test -v ./...
 
 lint:
 	$(GO) vet ./...

@@ -1,6 +1,6 @@
 programs:
   sleeper:
-    cmd: "sleep 30"
+    cmd: "sleep infinity"
     numprocs: 1
     autostart: true
     autorestart: never
@@ -11,8 +11,8 @@ programs:
     stopsignal: TERM
     stoptime: 5
   printer:
-    cmd: "yes hello"
-    numprocs: 1
+    cmd: "env"
+    numprocs: 2
     autostart: true
     autorestart: always
     exitcodes:
@@ -22,3 +22,5 @@ programs:
     stopsignal: TERM
     stoptime: 5
     stdout: /tmp/printer.stdout
+    env:
+      STARTED_BY: taskmaster

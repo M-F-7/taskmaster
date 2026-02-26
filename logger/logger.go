@@ -32,8 +32,8 @@ func LogStart(name string, pid int){
 func LogStop(name string) {
 	Log(fmt.Sprintf("[%s] stopped ", name))
 }
-func LogDied(name string, exitCode int) {
-	Log(fmt.Sprintf("[%s] died unexpectedly (exit code %d) ", name, exitCode))
+func LogDied(name string, exitCode int, signal string) {
+	Log(fmt.Sprintf("[%s] died unexpectedly (exit code %d) by signal: %s", name, exitCode, signal))
 }
 func LogRestart(name string) {
 	Log(fmt.Sprintf("[%s] restarting", name))

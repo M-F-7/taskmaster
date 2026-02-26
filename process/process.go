@@ -122,7 +122,7 @@ func (p *Process) Wait() error {
     p.state = Stopped
     p.Stopping = false
     if err != nil && !wasStopping {
-        logger.LogDied(p.Name, p.exec.ProcessState.ExitCode())
+        logger.LogDied(p.Name, p.exec.ProcessState.ExitCode(), p.stopSignal)
 		p.Done <- err
         return err
     }
