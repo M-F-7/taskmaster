@@ -24,3 +24,9 @@ IMPLEMENTED NEED TO BE TESTED
 IMPLEMENTED NEED TO BE TESTED
 - [ ] numprocs — lancer plusieurs instances du même programme-- 
 IMPLEMENTED NEED TO BE TESTED
+
+
+verifier les signaux si c est les bon qui sont call et si c les bons logger
+
+
+verif 
